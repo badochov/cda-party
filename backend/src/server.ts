@@ -1,9 +1,12 @@
-import { Server } from 'socket.io';
+import { Server, Socket } from 'socket.io';
+import { CLIENT_MESSAGES } from './messages';
 
-const io = new Server(8443, {
-  cors: { origin: '*' },
-});
+const io = new Server(3000);
 
-io.on('connection', socket => {
-  socket.emit('session_created', 42);
-});
+io.on('connection', socket => setupSocket(socket));
+
+function setupSocket(socket: Socket): void {
+  socket.on(CLIENT_MESSAGES.new, () => {
+    socket;
+  });
+}
