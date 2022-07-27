@@ -55,6 +55,7 @@ export class CDAParty {
 
   private setMsgEventHandlers() {
     chrome.runtime.onMessage.addListener((data, _sender, _resp) => {
+      console.log(data);
       if (data.type === 'participantChange') {
         this.handleParticipantChangeMsg(data);
       } else if (data.type === 'control') {

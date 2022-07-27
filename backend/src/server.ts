@@ -2,12 +2,17 @@ import { Server, Socket } from 'socket.io';
 import { ClientMsg, CLIENT_MESSAGES, SERVER_MESSAGES } from './messages';
 import { randomBytes } from 'crypto';
 
-const io = new Server(3000);
+const io = new Server(3000, {
+  // cors: {
+  //   origin: '*',
+  // },
+});
 
 io.on('connection', socket => setupSocket(socket));
 
 function setupSocket(socket: Socket): void {
   socket.onAny(console.log);
+  socket.onAnyOutgoing((...args) => console.log('SENDING', ...args));
   const data: { username?: string } = {};
   socket.on(CLIENT_MESSAGES.introduce, (msg: ClientMsg<'introduce'>) => {
     data.username = msg.data.user;
@@ -39,6 +44,7 @@ function setupSocket(socket: Socket): void {
       return;
     }
     if (!io.sockets.adapter.rooms.has(msg.data.sessionId)) {
+      console.log(msg.data.sessionId, io.sockets.adapter.rooms);
       socket.emit(SERVER_MESSAGES.sessionJoined, { error: 'unknown session', messageId: msg.messageId });
       return;
     }

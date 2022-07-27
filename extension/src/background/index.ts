@@ -78,7 +78,7 @@ function handlerNew(msg: BgMsg<'new'>, tab: chrome.tabs.Tab): Promise<string> {
 
 function setupSender(sender: SenderData) {
   sender.socket.on(SERVER_MESSAGES.participantChange, msg => handleParticipantChange(msg, sender));
-  sender.socket.on(SERVER_MESSAGES.control, handleControlReceived);
+  sender.socket.on(SERVER_MESSAGES.control, msg => handleControlReceived(msg, sender));
 }
 
 function handleParticipantChange(msg: ParticipantChangeMsg, sender: SenderData) {
