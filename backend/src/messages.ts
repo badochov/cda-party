@@ -14,7 +14,7 @@ export interface ClientMsgDataTypes {
   introduce: { user: User };
   new: null;
   join: { sessionId: string };
-  leave: {};
+  leave: null;
   control: { control: Control; time: number };
 }
 

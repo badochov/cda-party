@@ -7,6 +7,7 @@ const io = new Server(3000);
 io.on('connection', socket => setupSocket(socket));
 
 function setupSocket(socket: Socket): void {
+  socket.onAny(console.log);
   const data: { username?: string } = {};
   socket.on(CLIENT_MESSAGES.introduce, (msg: ClientMsg<'introduce'>) => {
     data.username = msg.data.user;
