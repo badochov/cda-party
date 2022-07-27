@@ -1,0 +1,20 @@
+{
+  "manifest_version": 3,
+  "content_scripts": [
+    {
+      "js": [
+        "content/index.ts"
+      ],
+      "matches": [
+        "https://*/*"
+      ]
+    }
+  ],
+  "background": {
+    "service_worker": "background/index.ts"
+  },
+  "action": {
+    "default_popup": "popup/index.html"
+  },
+  "name": "CDA Party"
+}

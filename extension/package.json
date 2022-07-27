@@ -1,0 +1,52 @@
+{
+  "name": "CDA Party",
+  "version": "1.0.0",
+  "private": true,
+  "description": "CDA Party",
+  "author": "Hubert Badocha",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/badochov/usos-srednia.git"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/badochov/usos-srednia/issues"
+  },
+  "homepage": "https://github.com/badochov/usos-srednia#readme",
+  "scripts": {
+    "build": "rollup -c",
+    "release": "cross-env NODE_ENV=production rollup -c",
+    "start": "rollup -c -w",
+    "test": "jest"
+  },
+  "dependencies": {
+    "@rollup/plugin-replace": "^3.0.0",
+    "bufferutil": "^4.0.6",
+    "prettier": "^2.2.1",
+    "socket.io-client": "^4.5.1",
+    "utf-8-validate": "^5.0.9",
+    "webextension-polyfill": "^0.7.0"
+  },
+  "devDependencies": {
+    "@rollup/plugin-alias": "^3.1.1",
+    "@rollup/plugin-commonjs": "^17.0.0",
+    "@rollup/plugin-node-resolve": "^11.0.1",
+    "@rollup/plugin-typescript": "^8.3.3",
+    "@types/chrome": "^0.0.193",
+    "@types/firefox-webext-browser": "^82.0.0",
+    "@types/jest": "^26.0.19",
+    "@typescript-eslint/eslint-plugin": "^4.10.0",
+    "@typescript-eslint/parser": "^4.10.0",
+    "cross-env": "^7.0.3",
+    "eslint": "^7.16.0",
+    "jest": "^26.6.3",
+    "rollup": "^2.56.3",
+    "rollup-plugin-chrome-extension": "^3.6.10",
+    "rollup-plugin-empty-dir": "^1.0.5",
+    "rollup-plugin-zip": "^1.0.3",
+    "ts-jest": "^26.4.4",
+    "tslib": "^2.0.3",
+    "typescript": "^4.1.3",
+    "jest-chrome": "^0.7.2"
+  }
+}
