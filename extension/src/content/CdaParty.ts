@@ -80,10 +80,6 @@ export class CdaPartyBase {
     // Wait for play confirmation.
     this.ignoreNextPause = true;
     await this.video.pause();
-    if (this.playFromSeek) {
-      this.playFromSeek = false;
-      return;
-    }
     this.controlHandler('play');
   }
 
@@ -94,15 +90,12 @@ export class CdaPartyBase {
     }
     this.controlHandler('pause');
   }
-  playFromSeek = false;
 
   protected async seekingHandler(ev: Event) {
     if (this.ignoreNextSeek) {
       this.ignoreNextSeek = false;
       return;
     }
-    // Wait for seek confirmation.
-    this.playFromSeek = true;
     this.controlHandler('seek');
   }
 
