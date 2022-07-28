@@ -1,12 +1,6 @@
-import { io } from 'socket.io-client';
-import { CDAParty } from './CDAParty';
+import { newParty } from './CdaParty';
 
-const socket = io('ws://localhost:3000', {
-  transports: ['websocket'],
-});
-socket.emit('foo', 'bar');
-
-// main();
+main();
 
 function main() {
   const video = getVideoEl();
@@ -35,7 +29,7 @@ function waitForAdVideo(video: HTMLVideoElement, adVideo: HTMLVideoElement | nul
 }
 
 async function start(video: HTMLVideoElement) {
-  const party = await CDAParty.new(video, 'Alojzy');
+  const party = newParty(video, 'Alojzy');
   const urlSearchParams = new URLSearchParams(window.location.search);
   const sessionId = urlSearchParams.get('cdaPartySessionId');
   if (sessionId === null) {

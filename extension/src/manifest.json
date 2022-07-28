@@ -6,13 +6,10 @@
         "content/index.ts"
       ],
       "matches": [
-        "https://*/*"
+        "https://www.cda.pl/video/*"
       ]
     }
   ],
-  "background": {
-    "service_worker": "background/index.ts"
-  },
   "action": {
     "default_popup": "popup/index.html"
   },
