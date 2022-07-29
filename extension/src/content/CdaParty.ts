@@ -21,7 +21,7 @@ export class CdaPartyBase {
   protected ignoreNextPlay: boolean = false;
   protected ignoreNextPause: boolean = false;
 
-  constructor(protected video: HTMLVideoElement, protected user: User, url: string) {
+  constructor(public video: HTMLVideoElement, protected user: User, url: string) {
     this.socket = io(url);
     this.setupSocket();
     this.setEventListeners();
@@ -100,14 +100,15 @@ export class CdaPartyBase {
     this.controlHandler('seek');
   }
 
-  protected controlHandler(controlName: Control): Promise<void> {
+  protected async controlHandler(controlName: Control): Promise<void> {
     const msg: ClientMsgData<'control'> = {
       data: {
         control: controlName,
         time: this.video.currentTime,
       },
     };
-    return this.handleErrorableMessage(msg, CLIENT_MESSAGES.control, SERVER_MESSAGES.controlAck);
+    await this.handleErrorableMessage(msg, CLIENT_MESSAGES.control, SERVER_MESSAGES.controlAck);
+    return await this.handleControlMsg({ ...msg, user: this.user });
   }
 
   async handleErrorableMessage<K extends keyof ClientMsgDataTypes>(msg: ClientMsgData<K>, send: string, expect: string): Promise<void> {
@@ -156,6 +157,7 @@ export class JoinableCdaParty {
   }
 
   protected async newSessionRequest(): Promise<string> {
+    this.party.video.pause();
     await this.party.introduce();
     return await new Promise(res => {
       const mId = this.party.nextMsgId();
@@ -172,6 +174,7 @@ export class JoinableCdaParty {
   }
 
   async joinSession(sessionId: string): Promise<LeavableCdaParty> {
+    this.party.video.pause();
     await this.party.introduce();
     const msg: ClientMsgData<'join'> = { data: { sessionId } };
     await this.party.handleErrorableMessage(msg, CLIENT_MESSAGES.join, SERVER_MESSAGES.sessionJoined);
