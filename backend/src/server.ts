@@ -2,17 +2,25 @@ import { Server, Socket } from 'socket.io';
 import { ClientMsg, CLIENT_MESSAGES, SERVER_MESSAGES } from './messages';
 import { randomBytes } from 'crypto';
 
-const io = new Server(3000, {
-  // cors: {
-  //   origin: '*',
-  // },
+import { readFileSync } from 'fs';
+import { createServer } from 'https';
+
+const httpServer = createServer({
+  key: readFileSync('cert/privkey.pem'),
+  cert: readFileSync('cert/cert.pem'),
 });
+
+const io = new Server(httpServer, {
+  cors: {
+    origin: '*',
+  },
+});
+
+httpServer.listen(8443);
 
 io.on('connection', socket => setupSocket(socket));
 
 function setupSocket(socket: Socket): void {
-  socket.onAny(console.log);
-  socket.onAnyOutgoing((...args) => console.log('SENDING', ...args));
   const data: { username?: string } = {};
   socket.on(CLIENT_MESSAGES.introduce, (msg: ClientMsg<'introduce'>) => {
     data.username = msg.data.user;
