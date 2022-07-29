@@ -92,6 +92,7 @@ export class CdaPartyBase {
   }
 
   protected async seekingHandler(ev: Event) {
+    console.log(ev);
     if (this.ignoreNextSeek) {
       this.ignoreNextSeek = false;
       return;
@@ -180,6 +181,10 @@ export class JoinableCdaParty {
 
 export class LeavableCdaParty {
   constructor(private party: CdaPartyBase) {}
+
+  getSessionId(): string {
+    return <string>this.party.sessionId;
+  }
 
   async leaveSession(): Promise<JoinableCdaParty> {
     const msg: ClientMsgData<'leave'> = { data: null };

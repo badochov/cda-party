@@ -1,4 +1,4 @@
-import { newParty } from './CdaParty';
+import { startMgr } from './Mgr';
 
 main();
 
@@ -29,12 +29,8 @@ function waitForAdVideo(video: HTMLVideoElement, adVideo: HTMLVideoElement | nul
 }
 
 async function start(video: HTMLVideoElement) {
-  const party = newParty(video, 'Alojzy');
   const urlSearchParams = new URLSearchParams(window.location.search);
-  const sessionId = urlSearchParams.get('cdaPartySessionId');
-  if (sessionId === null) {
-    await party.newSession();
-  } else {
-    await party.joinSession(sessionId);
-  }
+
+  const sessionId = urlSearchParams.get('cdaPartyJoin');
+  await startMgr(video, sessionId);
 }

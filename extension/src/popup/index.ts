@@ -1,16 +1,19 @@
-// import { CDAParty } from '../content/CDAParty';
+const newButton = <HTMLInputElement>document.getElementById('new');
+const messageSpan = <HTMLSpanElement>document.getElementById('message');
 
-// const button = <HTMLInputElement>document.getElementById('join');
-// const sessionId = <HTMLInputElement>document.getElementById('sessionId');
-
-// async function main() {
-//   // @ts-ignore
-//   const cdaParty = await CDAParty.new(null, 'aro');
-
-//   button.onclick = () => {
-//     cdaParty.joinSession(sessionId);
-//     alert(sessionId.value);
-//   };
-// }
-
-// main();
+newButton.onclick = async () => {
+  const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+  const tab = tabs?.at(0);
+  if (tab === undefined) {
+    console.error('Run CDA Party without tab opened');
+    return;
+  }
+  if (tab.id === undefined) {
+    console.error('Tab has no id');
+    return;
+  }
+  const url = await chrome.tabs.sendMessage(tab.id, 'new');
+  // @ts-ignore
+  await navigator.clipboard.writeText(url);
+  messageSpan.textContent = 'Skopiowano adres pokoju do schowka.';
+};
