@@ -128,11 +128,10 @@ jobs:
 
   github-release-publish:
     runs-on: ubuntu-latest
-    needs:
-      [
+    needs: [
         "has-changed",
         "create-github-release-draft",
-        "firefox-publish",
+        # "firefox-publish", -- Firefox is not supported as of now
         "chrome-publish",
       ]
     steps:
