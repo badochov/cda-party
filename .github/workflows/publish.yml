@@ -21,6 +21,8 @@ jobs:
       - name: Check if version has been updated
         id: version_change
         uses: EndBug/version-check@v1
+        with:
+          file-name: extension/package.json
 
       - name: Early exit if version didn't change
         if: steps.version_change.outputs.changed != 'true'
@@ -57,9 +59,11 @@ jobs:
           node-version: 18.x
 
       - name: Install deps
+        working-directory: extension
         run: npm install
 
       - name: Build
+        working-directory: extension
         run: npm run release
 
       - name: Chrome Extension upload & publish
@@ -69,7 +73,7 @@ jobs:
           app-id: bpjfnkpgoookljinbamidhkjjhffifdn
           client-id: 697242455057-i7c4ej57piivmio3os5216g4sefg6cdp.apps.googleusercontent.com
           client-secret: ${{ secrets.CLIENT_SECRET }}
-          file-name: releases/cda-party-${{ needs.has-changed.outputs.version  }}.zip
+          file-name: extension/releases/cda-party-${{ needs.has-changed.outputs.version  }}.zip
           publish: true
 
       - name: Upload to github releases
@@ -78,7 +82,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
         with:
           upload_url: ${{ needs.create-github-release-draft.outputs.upload_url  }}
-          asset_path: releases/cda-party-${{ needs.has-changed.outputs.version  }}.zip
+          asset_path: extensions/releases/cda-party-${{ needs.has-changed.outputs.version  }}.zip
           asset_name: cda-party-chrome-${{ needs.has-changed.outputs.version  }}.zip
           asset_content_type: application/zip
 
@@ -96,16 +100,18 @@ jobs:
           node-version: 18.x
 
       - name: Install deps
+        working-directory: extension
         run: npm install
 
       - name: Build
+        working-directory: extension
         run: npm run release
 
       - name: Upload to firefox addons
         uses: trmcnvn/firefox-addon@v1
         with:
           uuid: "{7738ac86-b5b2-4372-bc2b-1c371631bd73}"
-          xpi: releases/cda-party-${{ needs.has-changed.outputs.version  }}.zip
+          xpi: extension/releases/cda-party-${{ needs.has-changed.outputs.version  }}.zip
           manifest: dist/manifest.json
           api-key: user:16832256:680
           api-secret: ${{ secrets.CLIENT_SECRET }}
@@ -116,7 +122,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
         with:
           upload_url: ${{ needs.create-github-release-draft.outputs.upload_url  }}
-          asset_path: releases/cda-party-${{ needs.has-changed.outputs.version  }}.zip
+          asset_path: extension/releases/cda-party-${{ needs.has-changed.outputs.version  }}.zip
           asset_name: cda-party-firefox-${{ needs.has-changed.outputs.version  }}.zip
           asset_content_type: application/zip
 
