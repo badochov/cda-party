@@ -1,11 +1,3 @@
-export const CLIENT_MESSAGES = {
-  introduce: 'introduce',
-  new: 'new',
-  join: 'join',
-  leave: 'leave',
-  control: 'control',
-};
-
 export type Control = 'play' | 'pause' | 'seek';
 
 export type User = string;
@@ -26,35 +18,16 @@ export interface ClientMsg<K extends keyof ClientMsgDataTypes> extends ClientMsg
   messageId: number;
 }
 
-export const SERVER_MESSAGES = {
-  sessionCreated: 'sessionCreated',
-  sessionJoined: 'sessionJoined',
-  sessionLeft: 'sessionLeft',
-  controlAck: 'controlAck',
-  introduceAck: 'introduceAck',
-  participantChange: 'participantChange',
-  control: 'control',
-};
-
-export interface ClientMessageReply {
+export interface MsgAck {
   messageId: number;
+  error?: string;
 }
 
 export interface SessionCreatedMsgData {
   sessionId: string;
 }
 
-export interface ErrorData {
-  error?: string;
-}
-
-export type IntroduceAck = ClientMessageReply;
-
-export interface SessionCreatedMsg extends SessionCreatedMsgData, ClientMessageReply {}
-
-export interface SessionJoinedMsg extends ErrorData, ClientMessageReply {}
-export interface SessionLeftMsg extends ErrorData, ClientMessageReply {}
-export interface ControlAcknowledgedMsg extends ErrorData, ClientMessageReply {}
+export interface SessionCreatedMsg extends SessionCreatedMsgData, MsgAck {}
 
 export interface WithUser {
   user: User;

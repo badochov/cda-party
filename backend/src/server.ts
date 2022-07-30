@@ -1,6 +1,7 @@
 import { Server, Socket } from 'socket.io';
-import { ClientMsg, CLIENT_MESSAGES, SERVER_MESSAGES } from './messages';
+import { ClientMsg } from './messages';
 import { randomBytes } from 'crypto';
+import { ClientMsgMap, ServerMsgMap } from './socketTypes';
 
 import { readFileSync } from 'fs';
 import { createServer } from 'https';
@@ -10,7 +11,7 @@ const httpServer = createServer({
   cert: readFileSync('cert/cert.pem'),
 });
 
-const io = new Server(httpServer, {
+const io = new Server<ClientMsgMap, ServerMsgMap>(httpServer, {
   cors: {
     origin: '*',
   },
@@ -20,57 +21,67 @@ httpServer.listen(8443);
 
 io.on('connection', socket => setupSocket(socket));
 
-function setupSocket(socket: Socket): void {
-  const data: { username?: string } = {};
-  socket.on(CLIENT_MESSAGES.introduce, (msg: ClientMsg<'introduce'>) => {
-    data.username = msg.data.user;
-    socket.emit(SERVER_MESSAGES.introduceAck, { messageId: msg.messageId });
-  });
-  socket.on(CLIENT_MESSAGES.new, (msg: ClientMsg<'new'>) => {
-    if (data.username === undefined) {
-      socket.emit(SERVER_MESSAGES.sessionCreated, { error: "user hasn't introduced yet", messageId: msg.messageId });
-      return;
+interface SocketData {
+  username?: string;
+}
+
+const sockets: Map<string, SocketData> = new Map();
+
+function setupSocket(socket: Socket<ClientMsgMap, ServerMsgMap>): void {
+  sockets.set(socket.id, {});
+  socket.use((ev, next) => {
+    if (ev[0] !== 'introduce' && socketData(socket).username === undefined) {
+      return next(new Error("user hasn't introduced yet"));
     }
+    return next();
+  });
+
+  socket.on('introduce', (msg: ClientMsg<'introduce'>) => {
+    socketData(socket).username = msg.data.user;
+    socket.emit('msgAck', { messageId: msg.messageId });
+  });
+  socket.on('new', (msg: ClientMsg<'new'>) => {
     const sessionId = generateRoomId();
     socket.join(sessionId);
-    socket.emit(SERVER_MESSAGES.sessionCreated, { sessionId, messageId: msg.messageId });
+    socket.emit('sessionCreated', { sessionId, messageId: msg.messageId });
   });
-  socket.on(CLIENT_MESSAGES.leave, (msg: ClientMsg<'leave'>) => {
-    if (data.username === undefined) {
-      socket.emit(SERVER_MESSAGES.sessionLeft, { error: "user hasn't introduced yet", messageId: msg.messageId });
-      return;
-    }
+  socket.on('leave', (msg: ClientMsg<'leave'>) => {
+    const data = socketData(socket);
     for (const room of socket.rooms) {
+      if (room === socket.id) {
+        continue;
+      }
       socket.leave(room);
-      socket.to(room).emit(SERVER_MESSAGES.participantChange, { name: data.username, joined: false });
+      socket.to(room).emit('participantChange', { user: data.username, joined: false });
     }
-    socket.emit(SERVER_MESSAGES.sessionLeft, { messageId: msg.messageId });
+    socket.emit('msgAck', { messageId: msg.messageId });
   });
-  socket.on(CLIENT_MESSAGES.join, (msg: ClientMsg<'join'>) => {
-    if (data.username === undefined) {
-      socket.emit(SERVER_MESSAGES.sessionJoined, { error: "user hasn't introduced yet", messageId: msg.messageId });
-      return;
-    }
+  socket.on('join', (msg: ClientMsg<'join'>) => {
+    const data = socketData(socket);
     if (!io.sockets.adapter.rooms.has(msg.data.sessionId)) {
       console.log(msg.data.sessionId, io.sockets.adapter.rooms);
-      socket.emit(SERVER_MESSAGES.sessionJoined, { error: 'unknown session', messageId: msg.messageId });
+      socket.emit('msgAck', { error: 'unknown session', messageId: msg.messageId });
       return;
+    }
+    if (socket.rooms.size !== 1) {
+      socket.emit('msgAck', { error: 'socket is already in a room', messageId: msg.messageId });
     }
     socket.join(msg.data.sessionId);
-    socket.to(msg.data.sessionId).emit(SERVER_MESSAGES.participantChange, { user: data.username, joined: true });
+    socket.to(msg.data.sessionId).emit('participantChange', { user: data.username, joined: true });
 
-    socket.emit(SERVER_MESSAGES.sessionJoined, { messageId: msg.messageId });
+    socket.emit('msgAck', { messageId: msg.messageId });
   });
-  socket.on(CLIENT_MESSAGES.control, (msg: ClientMsg<'control'>) => {
-    if (data.username === undefined) {
-      socket.emit(SERVER_MESSAGES.controlAck, { error: "user hasn't introduced yet", messageId: msg.messageId });
-      return;
-    }
+  socket.on('control', (msg: ClientMsg<'control'>) => {
+    const data = socketData(socket);
     for (const room of socket.rooms) {
-      socket.to(room).emit(SERVER_MESSAGES.control, { data: msg.data, user: data.username });
+      socket.to(room).emit('control', { data: msg.data, user: data.username });
     }
-    socket.emit(SERVER_MESSAGES.controlAck, { messageId: msg.messageId });
+    socket.emit('msgAck', { messageId: msg.messageId });
   });
+}
+
+function socketData(socket: Socket): SocketData {
+  return sockets.get(socket.id);
 }
 
 function generateRoomId(): string {

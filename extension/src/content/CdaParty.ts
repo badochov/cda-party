@@ -3,18 +3,18 @@ import {
   ClientMsg,
   ClientMsgData,
   ClientMsgDataTypes,
-  CLIENT_MESSAGES,
   Control,
   ControlMsg,
   ParticipantChangeMsg,
-  SERVER_MESSAGES,
   SessionCreatedMsg,
   User,
+  MsgAck,
 } from '../messages';
+import { ServerMsgMap, ClientMsgMap } from '../socketTypes';
 
 export class CdaPartyBase {
   sessionId: string | null = null;
-  socket: Socket;
+  socket: Socket<ServerMsgMap, ClientMsgMap>;
   protected messageId: number = 0;
   protected introduced: boolean = false;
   protected ignoreNextSeek: boolean = false;
@@ -36,7 +36,7 @@ export class CdaPartyBase {
         user: this.user,
       },
     };
-    return this.handleErrorableMessage(msg, CLIENT_MESSAGES.introduce, SERVER_MESSAGES.introduceAck);
+    return this.handleMsgAck(msg, 'introduce');
   }
 
   protected setEventListeners() {
@@ -106,24 +106,26 @@ export class CdaPartyBase {
         time: this.video.currentTime,
       },
     };
-    await this.handleErrorableMessage(msg, CLIENT_MESSAGES.control, SERVER_MESSAGES.controlAck);
+    await this.handleMsgAck(msg, 'control');
     return await this.handleControlMsg({ ...msg, user: this.user });
   }
 
-  async handleErrorableMessage<K extends keyof ClientMsgDataTypes>(msg: ClientMsgData<K>, send: string, expect: string): Promise<void> {
+  async handleMsgAck<K extends keyof ClientMsgMap>(msg: ClientMsgData<K>, send: K): Promise<void> {
     return new Promise((res, rej) => {
       const mId = this.nextMsgId();
-      const action = ({ error, messageId }: { error?: string; messageId: number }) => {
+      const action = ({ messageId, error }: MsgAck) => {
         if (messageId === mId) {
-          this.socket.off(expect, action);
+          this.socket.off('msgAck', action);
           if (error !== undefined) {
             rej(error);
           }
           res();
         }
       };
-      this.socket.on(expect, action);
-      this.socket.emit(send, this.toServerMsg(msg, mId));
+      this.socket.on('msgAck', action);
+      // TODO fix this type issue.
+      // @ts-ignore
+      this.socket.emit(send, this.toServerMsg<K>(msg, mId));
     });
   }
 
@@ -132,8 +134,8 @@ export class CdaPartyBase {
   }
 
   protected setupSocket() {
-    this.socket.on(SERVER_MESSAGES.participantChange, (msg: ParticipantChangeMsg) => this.handleParticipantChangeMsg(msg));
-    this.socket.on(SERVER_MESSAGES.control, (msg: ControlMsg) => this.handleControlMsg(msg));
+    this.socket.on('participantChange', (msg: ParticipantChangeMsg) => this.handleParticipantChangeMsg(msg));
+    this.socket.on('control', (msg: ControlMsg) => this.handleControlMsg(msg));
   }
 
   toServerMsg<K extends keyof ClientMsgDataTypes>(msg: ClientMsgData<K>, messageId: number): ClientMsg<K> {
@@ -162,13 +164,14 @@ export class JoinableCdaParty {
       const mId = this.party.nextMsgId();
       const action = ({ sessionId, messageId }: SessionCreatedMsg) => {
         if (messageId === mId) {
-          this.party.socket.off(SERVER_MESSAGES.sessionCreated, action);
+          this.party.socket.off('sessionCreated', action);
           res(sessionId);
         }
       };
 
-      this.party.socket.on(SERVER_MESSAGES.sessionCreated, action);
-      this.party.socket.emit(CLIENT_MESSAGES.new, this.party.toServerMsg({ data: null }, mId));
+      this.party.socket.on('sessionCreated', action);
+      const a = this.party.toServerMsg<'new'>({ data: null }, mId);
+      this.party.socket.emit('new', a);
     });
   }
 
@@ -176,7 +179,7 @@ export class JoinableCdaParty {
     this.party.video.pause();
     await this.party.introduce();
     const msg: ClientMsgData<'join'> = { data: { sessionId } };
-    await this.party.handleErrorableMessage(msg, CLIENT_MESSAGES.join, SERVER_MESSAGES.sessionJoined);
+    await this.party.handleMsgAck(msg, 'join');
     return new LeavableCdaParty(this.party);
   }
 }
@@ -190,7 +193,7 @@ export class LeavableCdaParty {
 
   async leaveSession(): Promise<JoinableCdaParty> {
     const msg: ClientMsgData<'leave'> = { data: null };
-    await this.party.handleErrorableMessage(msg, CLIENT_MESSAGES.leave, SERVER_MESSAGES.sessionLeft);
+    await this.party.handleMsgAck(msg, 'leave');
     return new JoinableCdaParty(this.party);
   }
 }
