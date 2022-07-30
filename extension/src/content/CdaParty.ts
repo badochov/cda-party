@@ -24,7 +24,6 @@ export class CdaPartyBase {
   constructor(public video: HTMLVideoElement, protected user: User, url: string) {
     this.socket = io(url);
     this.setupSocket();
-    this.setEventListeners();
   }
 
   introduce(): Promise<void> {
@@ -39,8 +38,16 @@ export class CdaPartyBase {
     return this.handleMsgAck(msg, 'introduce');
   }
 
-  protected setEventListeners() {
-    this.setVideoEventHandlers();
+  setEventListeners() {
+    this.video.onplay = (ev: Event) => this.playHandler(ev);
+    this.video.onpause = (ev: Event) => this.pauseHandler(ev);
+    this.video.onseeking = (ev: Event) => this.seekingHandler(ev);
+  }
+
+  removeEventListeners() {
+    this.video.onplay = null;
+    this.video.onpause = null;
+    this.video.onseeking = null;
   }
 
   protected async handleControlMsg(data: ControlMsg) {
@@ -63,12 +70,6 @@ export class CdaPartyBase {
 
   protected handleParticipantChangeMsg(data: ParticipantChangeMsg) {
     console.log(data); // TODO
-  }
-
-  protected setVideoEventHandlers() {
-    this.video.onplay = (ev: Event) => this.playHandler(ev);
-    this.video.onpause = (ev: Event) => this.pauseHandler(ev);
-    this.video.onseeking = (ev: Event) => this.seekingHandler(ev);
   }
 
   protected async playHandler(ev: Event) {
@@ -149,7 +150,9 @@ export function newParty(video: HTMLVideoElement, user: User, url: string = 'htt
 }
 
 export class JoinableCdaParty {
-  constructor(private party: CdaPartyBase) {}
+  constructor(private party: CdaPartyBase) {
+    party.removeEventListeners();
+  }
 
   async newSession(): Promise<LeavableCdaParty> {
     this.party.sessionId = await this.newSessionRequest();
@@ -185,7 +188,9 @@ export class JoinableCdaParty {
 }
 
 export class LeavableCdaParty {
-  constructor(private party: CdaPartyBase) {}
+  constructor(private party: CdaPartyBase) {
+    party.setEventListeners();
+  }
 
   getSessionId(): string {
     return <string>this.party.sessionId;
