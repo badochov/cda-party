@@ -173,13 +173,12 @@ export class JoinableCdaParty {
       };
 
       this.party.socket.on('sessionCreated', action);
-      const a = this.party.toServerMsg<'new'>({ data: null }, mId);
-      this.party.socket.emit('new', a);
+      this.party.socket.emit('new', this.party.toServerMsg<'new'>({ data: null }, mId));
     });
   }
 
   async joinSession(sessionId: string): Promise<LeavableCdaParty> {
-    this.party.video.pause();
+    await this.party.video.pause();
     await this.party.introduce();
     const msg: ClientMsgData<'join'> = { data: { sessionId } };
     await this.party.handleMsgAck(msg, 'join');
