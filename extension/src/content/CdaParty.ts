@@ -92,7 +92,6 @@ export class CdaPartyBase {
   }
 
   protected async seekingHandler(ev: Event) {
-    console.log(ev);
     if (this.ignoreNextSeek) {
       this.ignoreNextSeek = false;
       return;
